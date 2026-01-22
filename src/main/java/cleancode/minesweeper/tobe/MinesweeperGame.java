@@ -25,20 +25,26 @@ public class MinesweeperGame {
         initinalizeGame();
 
         while (true) {
-            showBoard();
+            try {
+                showBoard();
 
-            if (doseUserWinTheGame()) { // 갑자기 추상레벨이 낮음 -> 추상화 함
-                System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
-                break;
-            }
-            if (doseUserLoseTheGame()) {
-                System.out.println("지뢰를 밟았습니다. GAME OVER!");
-                break;
-            }
+                if (doseUserWinTheGame()) { // 갑자기 추상레벨이 낮음 -> 추상화 함
+                    System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
+                    break;
+                }
+                if (doseUserLoseTheGame()) {
+                    System.out.println("지뢰를 밟았습니다. GAME OVER!");
+                    break;
+                }
 
-            String cellInput = getCellInputFromUser();
-            String userActionInput = getUserActionInputFromUser();
-            actOnCell(cellInput, userActionInput);
+                String cellInput = getCellInputFromUser();
+                String userActionInput = getUserActionInputFromUser();
+                actOnCell(cellInput, userActionInput);
+            } catch (AppException e) { // 의도한 것
+                System.out.println(e.getMessage());
+            } catch (Exception e) { // 의도하지 못한것
+                System.out.println(" 프로그램에 문제가 생겼습니다.");
+            }
         }
     }
 
@@ -63,7 +69,7 @@ public class MinesweeperGame {
             checkIfGameIsOver();
             return;
         }
-        System.out.println("잘못된 번호를 선택하셨습니다.");
+        throw new AppException("잘못된 번호를 선택하셨습니다.");
     }
 
     private static void changeGameStatusToLose() {
@@ -125,11 +131,15 @@ public class MinesweeperGame {
         // 단순히 메서드 분리하면 복잡도만 더 높아짐 -> 람다로 표현가능
         return Arrays.stream(BOARD)
             .flatMap(Arrays::stream)
-            .noneMatch(cell -> cell.equals(CLOSE_CELL_SIGN));
+            .noneMatch(CLOSE_CELL_SIGN::equals); //cell 이 NPE일수도 있음 이미 CLOSE_CELL_SIGN 이 상수임 (확정적)
     }
 
     private static int convertRowFrom(char cellInputRow) {
-        return Character.getNumericValue(cellInputRow) - 1;
+        int rowIndex = Character.getNumericValue(cellInputRow) - 1;
+        if (rowIndex >= BOARD_ROW_SIZE) {
+            throw new AppException("잘못된 입력입니다");
+        }
+        return rowIndex;
     }
 
     private static int convertColFrom(char cellInputCol) {
@@ -155,7 +165,7 @@ public class MinesweeperGame {
             case 'j':
                 return 9;
             default:
-                return -1;
+                throw new AppException("잘못된 입력입니다.");
         }
     }
 
